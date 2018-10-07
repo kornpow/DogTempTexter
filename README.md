@@ -1,8 +1,10 @@
-# A Sample Node.js Container to run on ResinOS
+# Dog Temp Texter
 
-This is a small "Hello, World!" webserver example which is designed to show you how to quickly get up and running with [`rdt`](https://github.com/resin-os/resin-device-toolbox) and [resinOS](resinos.io).
+
+This system is designed to connect to a wireless network and send texts to a user about a temperature sensor. The user can setup alerts that will send additional messenges.
 
 1. Clone this repo, 
-2. Make sure `rdt` is installed,
+2. Make sure resin CLI is install
 3. ensure your resinOS device is connected on your local network and is advertising as `resin.local`
-4. run `rdt push -s .`
+4. run `resin local configure /dev/mmcblk0`
+5. Push this code: `resin local push resin.local`
