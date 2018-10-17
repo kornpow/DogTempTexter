@@ -2,7 +2,13 @@ local_resinos:
   app-name: myapp
   build-triggers:
     - Dockerfile: efc52f5eff9d532fa57d9d859e0dd558642d23609771cc66c9537d6bbecbf87e
-  environment: []
+  environment:
+    - TEXT_FREQ=4
+    - TWILIO_NUMBER='+17208097549'
+    - CONTACT_NUMBER='+17203334371'
+    - TIMEZONE=America/New_York
+    - TWILIO_ACCT_SID=AC418d083117870727526b01a66b6ffc5c
+    - TWILIO_AUTH_TOKEN=2a569c979685138c2c59a469c6629b47
 ignore:
   - .git
   - node_modules/

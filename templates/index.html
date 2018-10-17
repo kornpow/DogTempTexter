@@ -1,0 +1,9 @@
+{% block title %}Dog Heat Tracker!{% endblock %}
+{% block body %}
+  <h1>Dog Texter</h1>
+  <br/>
+  <h3>Text Message Frequency: {{ env["TEXT_FREQ"] }} </h3>
+  <h3>Twilio Phone Number: {{ env["TWILIO_NUMBER"]}} </h3>
+  <h3>Receive Alert Number: {{ env["CONTACT_NUMBER"]}} </h3>
+  <h3>Current Sensor Readings (H,Tf,Tc): {{dogwalker.clean_sensors}} </h3>
+{% endblock %}
