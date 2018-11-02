@@ -1,4 +1,5 @@
 from twilio.rest import Client
+from twilio.twiml.messaging_response import Body, Message, Redirect, MessagingResponse
 from datetime import datetime
 import socket
 from math import fsum
@@ -19,6 +20,10 @@ class DogTempSensor(object):
 	def __init__(self):
 		self.dht22_bcm = 17
 
+		# Set this to true in order to text every minute an alert!
+		self.alert = False
+		self.limit = None
+
 		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		s.connect(('8.8.8.8', 1))  # connect() for UDP doesn't send packets
 		local_ip_address = s.getsockname()[0]
@@ -35,6 +40,7 @@ class DogTempSensor(object):
 		# Store resin environment variable as a class variable
 		self.mins_per_text = os.environ["TEXT_FREQ"] 
 
+		schedule.every(30).seconds.do(self.SendInfoMessage)
 
 		t1 = threading.Thread(target=self.t_flask_server, name="flask_server")
 		t1.setDaemon(True)
@@ -46,7 +52,7 @@ class DogTempSensor(object):
 		t2.start()
 		print("Started Temp and Humidity Reader Thread")
 
-		sleep(10)
+		sleep(5)
 		t3 = threading.Thread(target=self.t_text_message_router, name="text router")
 		t3.setDaemon(True)
 		t3.start()
@@ -58,7 +64,8 @@ class DogTempSensor(object):
 			try:
 				app = Flask(__name__)
 				app.add_url_rule('/',view_func=self.ResponseTextServer)
-				app.add_url_rule('/update',view_func=self.UpdateSensorLimit, methods=['POST',])
+				app.add_url_rule('/update',view_func=self.UpdateSensorLimit)
+				app.add_url_rule('/in-bound',view_func=self.InBoundMessageResponse, methods=['GET', 'POST'])
 				app.run(host='0.0.0.0', port=80)
 				
 			except Exception as e:
@@ -68,23 +75,44 @@ class DogTempSensor(object):
 	def t_read_th_sensor(self):
 		while True:
 			self.clean_sensors = self.ReadDHT22()
+			if self.limit != None:
+				if self.clean_sensors[1] >= self.limit:
+					self.alert = True
+				else:
+					self.alert = False
 			print("Clean Sensors Readings: %s,%s,%s" % self.clean_sensors)
 			sleep(2)
 
+	def SendInfoMessage(self):
+		# while True:
+		current_time = datetime.strftime(datetime.now(),"%I:%M:%S %p")
+		print(current_time)
+
+		if self.limit == None:
+			msg_text = "Still Monitoring! " + current_time
+		else:
+			msg_text = "Alert Status: " + str(self.alert) + \
+			"\nCurrent Limit " + str(self.limit)
+
+		msg_text = msg_text + "\nTemp (H,Tf,Tc): " + str(self.clean_sensors) + \
+		"\n" +  "Threads: " + str(threading.active_count() )
+		
+		print(msg_text)
+
+		self.SendTextMessage(msg_text)
+
+		# if self.alert == True:
+		# 	sleep(60)
+		# else:
+		# 	sleep(60 * int(self.mins_per_text) )
+
+		# return schedule.CancelJob
+
 	def t_text_message_router(self):
 		while True:
-			current_time = datetime.strftime(datetime.now(),"%I:%M:%S %p")
-			print(current_time)
-			msg_text = "\nStill Monitoring! " + current_time + \
-				" \nTemp (C/F): " + str(self.clean_sensors) + \
-				"\n" + str(self.temp_buff) + "\n" + str(self.humid_buff) + \
-				"\n" +  "Threads: " + str(threading.active_count() )
-			
-			print(msg_text)
+		    schedule.run_pending()
+		    time.sleep(1)
 
-			self.SendTextMessage(msg_text)
-
-			sleep(60 * int(self.mins_per_text) )
 
 	# DHT22: Return clean sensor data (humidity, tempf, tempc )
 	def ReadDHT22(self):
@@ -131,10 +159,29 @@ class DogTempSensor(object):
 		return render_template('index.html', env=os.environ, dogwalker=self)
 
 	# Flask Post? From Twilio?
-	def UpdateSensorLimit(self,arg):
-		print(arg)
-		return arg
+	def UpdateSensorLimit(self):
+		return render_template('twilio_response.html')
 
+	def InBoundMessageResponse(self):
+		# Get text message body from POST request
+		body = request.values.get('Body', None)
+		print("Received Message: %s" % str(body) )
+
+		# Craft Twilio Response
+		response = MessagingResponse()
+		message = Message()
+		rstring = None
+
+
+		if body.lower().startswith("limit="):
+			self.limit = int(body[len("limit="):] )
+			rstring = "Setting Alert Limit to {0} degrees".format(self.limit)
+		else:
+			rstring = "Respond with message starting with `limit=` to set an alert!"
+		message.body(rstring)
+		response.append(message)
+
+		return str(response)
 
 
 if __name__ == '__main__':

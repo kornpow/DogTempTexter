@@ -1,7 +1,7 @@
 local_resinos:
   app-name: myapp
   build-triggers:
-    - Dockerfile: efc52f5eff9d532fa57d9d859e0dd558642d23609771cc66c9537d6bbecbf87e
+    - Dockerfile: 48e36c8e273417334d8a32769ad2ab49196d90e68eedba2a83c32fb44ba73c4f
   environment:
     - TEXT_FREQ=4
     - TWILIO_NUMBER='+17208097549'

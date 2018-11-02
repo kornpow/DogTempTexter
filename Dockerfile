@@ -26,9 +26,10 @@ cd /usr/src/app/MyPyDHT && \
 python3 setup.py install
 
 # --prefix=/usr/src/app/env
-COPY ./requirements.txt requirements.txt
+COPY ./requirements.txt /requirements.txt
 
-RUN pip install -r requirements.txt
+# Install the python dependancies, and use the piwheels repo
+RUN pip install -r /requirements.txt --extra-index-url https://www.piwheels.org/simple
 
 
 COPY . .
