@@ -15,6 +15,9 @@ from flask import render_template
 from flask import redirect, url_for
 from flask import jsonify
 from flask import request
+from time import sleep
+
+import schedule
 
 class DogTempSensor(object):
 	def __init__(self):
@@ -38,27 +41,39 @@ class DogTempSensor(object):
 		self.SendTextMessage('Bootup @ IP '+ local_ip_address+  ' at:' + current_time )
 
 		# Store resin environment variable as a class variable
-		self.mins_per_text = os.environ["TEXT_FREQ"] 
+		self.mins_per_text = int(os.environ["TEXT_FREQ"])
 
-		schedule.every(30).seconds.do(self.SendInfoMessage)
+		# Set the number of minutes for the default text frequency as a resin environment variable
+		schedule.every(self.mins_per_text).minutes.do(self.SendInfoMessage)
+		# Every 30 seconds send alert message if an alert occurs
+		schedule.every(30).seconds.do(self.SendAlertMessage)
+		# Every 3 seconds check the temp and humidity sensors and update the buffer
+		schedule.every(3).seconds.do(self.ReadTHSensor)
+		print("Started Temp and Humidity Reader Thread")
 
 		t1 = threading.Thread(target=self.t_flask_server, name="flask_server")
 		t1.setDaemon(True)
 		t1.start()
 		print("Started web server!")
 
-		t2 = threading.Thread(target=self.t_read_th_sensor, name="temp and humidity sensor")
+		t2 = threading.Thread(target=self.TimeScheduler, name="HeartBeatScheduler")
 		t2.setDaemon(True)
 		t2.start()
-		print("Started Temp and Humidity Reader Thread")
+		print("Scheduler")
 
-		sleep(5)
-		t3 = threading.Thread(target=self.t_text_message_router, name="text router")
-		t3.setDaemon(True)
-		t3.start()
-		print("Started Text Message Router Thread")
+		sleep(15)
+		self.SendInfoMessage()
+
+
+	# THREAD: This is the heartbeat when it checks if any of the scheduled events should be run
+	# *************************************
+	def TimeScheduler(self):
+		while True:
+		    schedule.run_pending()
+		    sleep(1)
 
 	# THREAD: Run Web Server to receive text events webhooks
+	# ******************************************************
 	def t_flask_server(self):
 		while True:
 			try:
@@ -72,76 +87,66 @@ class DogTempSensor(object):
 				sleep(30)
 
 	# THREAD: Read temp and humidity sensor
-	def t_read_th_sensor(self):
-		while True:
-			self.clean_sensors = self.ReadDHT22()
-			if self.limit != None:
-				if self.clean_sensors[1] >= self.limit:
-					self.alert = True
-				else:
-					self.alert = False
-			print("Clean Sensors Readings: %s,%s,%s" % self.clean_sensors)
-			sleep(2)
+	# *************************************
+	def ReadTHSensor(self):
+		# Get package of humidity, tempf, and tempc
+		self.clean_sensors = self.ReadDHT22()
 
+		# Decide if alert flag should be set
+		if self.limit != None:
+			# Check whether to use celcius or fahrenheit
+			f_or_c = 1
+			if os.environ["ALERT_LOCAL"] == "C":
+				f_or_c = 2
+			elif os.environ["ALERT_LOCAL"] == "F":
+				f_or_c = 1
+
+			if self.clean_sensors[f_or_c] >= self.limit:
+				self.alert = True
+			else:
+				self.alert = False
+
+
+		print("Clean Sensors Readings: %s,%s,%s" % self.clean_sensors)
+
+
+	# Send current state over text message
 	def SendInfoMessage(self):
 		# while True:
 		current_time = datetime.strftime(datetime.now(),"%I:%M:%S %p")
-		print(current_time)
+		# print(current_time)
 
-		if self.limit == None:
-			msg_text = "Still Monitoring! " + current_time
-		else:
-			msg_text = "Alert Status: " + str(self.alert) + \
-			"\nCurrent Limit " + str(self.limit)
+		msg_text = "Still Monitoring! " + current_time		
 
-		msg_text = msg_text + "\nTemp (H,Tf,Tc): " + str(self.clean_sensors) + \
-		"\n" +  "Threads: " + str(threading.active_count() )
+
+		msg_text = msg_text + "\n(H,Tf,Tc): \n" + str(self.clean_sensors) + \
+		"\nThreads: " + str(threading.active_count() )
 		
 		print(msg_text)
 
 		self.SendTextMessage(msg_text)
 
-		# if self.alert == True:
-		# 	sleep(60)
-		# else:
-		# 	sleep(60 * int(self.mins_per_text) )
+	# Send alert state over text message
+	def SendAlertMessage(self):
+		# while True:
+		current_time = datetime.strftime(datetime.now(),"%I:%M:%S %p")
+		# print(current_time)
 
-		# return schedule.CancelJob
+		if self.limit != None:
+			msg_text = "Alert Status: " + str(self.alert) + \
+			"\nCurrent Limit " + str(self.limit) + os.environ["ALERT_LOCAL"]
+			msg_text = msg_text + "\nTemp (H,Tf,Tc): " + str(self.clean_sensors) + \
+			"\n" +  "Threads: " + str(threading.active_count() )
+			self.SendTextMessage(msg_text)
+			return
+		
+		print("No active alerts")
 
-	def t_text_message_router(self):
-		while True:
-		    schedule.run_pending()
-		    time.sleep(1)
 
 
-	# DHT22: Return clean sensor data (humidity, tempf, tempc )
-	def ReadDHT22(self):
-		# humidity = -1
-		# temp = -1
-		retry = 0
-		max_retry = 10
-		while retry < max_retry:
-			try:
-				humidity, temp = MyPyDHT.sensor_read(MyPyDHT.Sensor.DHT22, self.dht22_bcm)
-				# print("DHT22 Alive: Received:\t Temp: %f\tHumidity:%f" %(temp,humidity) )
-				
-				temp = (temp * 1.8) + 32
-				self.temp_buff.pop(0)
-				self.humid_buff.pop(0)
-				self.temp_buff.append(round(temp, 2) ) 
-				self.humid_buff.append(round(humidity, 2) )
-				average_h = round(fsum(self.humid_buff) / len(self.humid_buff), 2)
-				average_t = round(fsum(self.temp_buff) / len(self.temp_buff), 2)
-				return (average_h, average_t, round((average_t-32)/1.8,2) ) 
-
-			except Exception as e:
-				print(e)
-				retry = retry + 1
-				sleep(0.5)
-
-		return (-1,-1,-1)
 
 	# TWILIO: Send a text message using twilio
+	# You need to configure these environment variables in the web console and in .resin-sync.yml
 	def SendTextMessage(self,mymessage):
 		# Your Account Sid and Auth Token from twilio.com/console
 		account_sid = os.environ['TWILIO_ACCT_SID']
@@ -182,6 +187,34 @@ class DogTempSensor(object):
 		response.append(message)
 
 		return str(response)
+
+
+	# DHT22: Return clean sensor data (humidity, tempf, tempc )
+	def ReadDHT22(self):
+		# humidity = -1
+		# temp = -1
+		retry = 0
+		max_retry = 10
+		while retry < max_retry:
+			try:
+				humidity, temp = MyPyDHT.sensor_read(MyPyDHT.Sensor.DHT22, self.dht22_bcm)
+				# print("DHT22 Alive: Received:\t Temp: %f\tHumidity:%f" %(temp,humidity) )
+				
+				temp = (temp * 1.8) + 32
+				self.temp_buff.pop(0)
+				self.humid_buff.pop(0)
+				self.temp_buff.append(round(temp, 2) ) 
+				self.humid_buff.append(round(humidity, 2) )
+				average_h = round(fsum(self.humid_buff) / len(self.humid_buff), 2)
+				average_t = round(fsum(self.temp_buff) / len(self.temp_buff), 2)
+				return (average_h, average_t, round((average_t-32)/1.8,2) ) 
+
+			except Exception as e:
+				print(e)
+				retry = retry + 1
+				sleep(0.5)
+
+		return (-1,-1,-1)		
 
 
 if __name__ == '__main__':

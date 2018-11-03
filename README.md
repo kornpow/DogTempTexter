@@ -13,6 +13,7 @@ This system is designed to connect to a wireless network and send texts to a use
 	#Install Balena
 	npm install balena-cli -g --production --unsafe-perm
 	```
+3. On the Balena.io website, download image to be written to MicroSD card
 3. ensure your BalenaOS device is connected on your local network and is advertising as `resin.local`
 4. run `resin local configure /dev/mmcblk0`
 5. Push this code: `balena local push resin.local`
@@ -35,3 +36,7 @@ This system is designed to connect to a wireless network and send texts to a use
 	- [] Obtain Twilio Auth Token
 	- [] Click "All Products and Services" --> Manage Numbers
 	- [] Obtain a free phone number to use
+
+
+# Setting Alerts
+Respond back to the text message with ```limit=75``` in order to start sending alert messages when the temperature reaches this point, 75 degrees F.

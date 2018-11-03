@@ -1,5 +1,7 @@
 FROM resin/raspberry-pi-debian
 
+ENV VERSION 0.1.0
+
 RUN apt-get update && apt-get install -yq \
 	git \
 	python3 \
@@ -29,7 +31,7 @@ python3 setup.py install
 COPY ./requirements.txt /requirements.txt
 
 # Install the python dependancies, and use the piwheels repo
-RUN pip install -r /requirements.txt --extra-index-url https://www.piwheels.org/simple
+RUN pip install -Ur /requirements.txt --extra-index-url https://www.piwheels.org/simple
 
 
 COPY . .
