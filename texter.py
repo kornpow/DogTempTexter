@@ -4,6 +4,7 @@ from datetime import datetime
 import socket
 from math import fsum
 from time import sleep
+import time
 
 import MyPyDHT
 import os
@@ -26,6 +27,7 @@ class DogTempSensor(object):
 		# Set this to true in order to text every minute an alert!
 		self.alert = False
 		self.limit = None
+		time.tzset()
 
 		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		s.connect(('8.8.8.8', 1))  # connect() for UDP doesn't send packets
@@ -119,8 +121,13 @@ class DogTempSensor(object):
 		msg_text = "Still Monitoring! " + current_time		
 
 
-		msg_text = msg_text + "\n(H,Tf,Tc): \n" + str(self.clean_sensors) + \
-		"\nThreads: " + str(threading.active_count() )
+		msg_text = msg_text + "\n(H,Tf,Tc): \n" + str(self.clean_sensors)
+
+		if self.limit != None:
+			msg_text = msg_text + "\nCurrent Limit " + str(self.limit) + os.environ["ALERT_LOCAL"]
+	
+
+		msg_text = msg_text + "\nThreads: " + str(threading.active_count() )
 		
 		print(msg_text)
 
@@ -132,10 +139,10 @@ class DogTempSensor(object):
 		current_time = datetime.strftime(datetime.now(),"%I:%M:%S %p")
 		# print(current_time)
 
-		if self.limit != None:
-			msg_text = "Alert Status: " + str(self.alert) + \
+		if self.alert == True:
+			msg_text = "WARNING:\nAlert Status: " + str(self.alert) + \
 			"\nCurrent Limit " + str(self.limit) + os.environ["ALERT_LOCAL"]
-			msg_text = msg_text + "\nTemp (H,Tf,Tc): " + str(self.clean_sensors) + \
+			msg_text = msg_text + "\n(H,Tf,Tc):\n" + str(self.clean_sensors) + \
 			"\n" +  "Threads: " + str(threading.active_count() )
 			self.SendTextMessage(msg_text)
 			return
@@ -167,6 +174,7 @@ class DogTempSensor(object):
 	def UpdateSensorLimit(self):
 		return render_template('twilio_response.html')
 
+	# This is Flask function that Twilio calls with response data
 	def InBoundMessageResponse(self):
 		# Get text message body from POST request
 		body = request.values.get('Body', None)
@@ -180,7 +188,7 @@ class DogTempSensor(object):
 
 		if body.lower().startswith("limit="):
 			self.limit = int(body[len("limit="):] )
-			rstring = "Setting Alert Limit to {0} degrees".format(self.limit)
+			rstring = "Setting Alert Limit to {0} degrees {1}".format(self.limit, os.environ["ALERT_LOCAL"])
 		else:
 			rstring = "Respond with message starting with `limit=` to set an alert!"
 		message.body(rstring)
