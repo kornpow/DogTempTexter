@@ -121,6 +121,9 @@ class DogTempSensor(object):
 		msg_text = "Still Monitoring! " + current_time		
 
 
+		if self.alert == True:
+			# Dont double text when alert is active
+			return
 		msg_text = msg_text + "\n(H,Tf,Tc): \n" + str(self.clean_sensors)
 
 		if self.limit != None:
