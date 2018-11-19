@@ -124,7 +124,7 @@ class DogTempSensor(object):
 		if self.alert == True:
 			# Dont double text when alert is active
 			return
-		msg_text = msg_text + "\n(H,Tf,Tc): \n" + str(self.clean_sensors)
+		msg_text = msg_text + "\n(Tc): \n" + str(self.clean_sensors[2])
 
 		if self.limit != None:
 			msg_text = msg_text + "\nCurrent Limit " + str(self.limit) + os.environ["ALERT_LOCAL"]
@@ -145,7 +145,7 @@ class DogTempSensor(object):
 		if self.alert == True:
 			msg_text = "WARNING:\nAlert Status: " + str(self.alert) + \
 			"\nCurrent Limit " + str(self.limit) + os.environ["ALERT_LOCAL"]
-			msg_text = msg_text + "\n(H,Tf,Tc):\n" + str(self.clean_sensors) + \
+			msg_text = msg_text + "\n(Tc):\n" + str(self.clean_sensors[2]) + \
 			"\n" +  "Threads: " + str(threading.active_count() )
 			self.SendTextMessage(msg_text)
 			return
