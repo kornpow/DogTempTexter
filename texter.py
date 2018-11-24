@@ -41,7 +41,11 @@ class DogTempSensor(object):
 		current_time = datetime.strftime(datetime.now(),"%I:%M:%S %p")
 
 		# Send send message on bootup with ip address, useful for sshing and pushing code
-		self.SendTextMessage('Bootup @ IP '+ local_ip_address+  ' at:' + current_time )
+		bootup_msg = 'Bootup @ IP '+ local_ip_address+  ' at:' + current_time + "\n"
+		bootup_msg = bootup_msg + "Reply: \n`disable` to stop alerts\n"
+		bootup_msg = bootup_msg + "`limit=` to set upper limit alerts\n"
+		bootup_msg = bootup_msg + "`floor=` to set lower floor alerts\n"
+		self.SendTextMessage(bootup_msg)
 
 		# Store resin environment variable as a class variable
 		self.mins_per_text = int(os.environ["TEXT_FREQ"])
@@ -94,23 +98,34 @@ class DogTempSensor(object):
 	def ReadTHSensor(self):
 		# Get package of humidity, tempf, and tempc
 		self.clean_sensors = self.ReadDHT22()
+		print("Clean Sensors Readings: %s,%s,%s" % self.clean_sensors)
+		self.UpdateAlertStatus()
 
+
+	def UpdateAlertStatus(self):
 		# Decide if alert flag should be set
+		f_or_c = 2
 		if self.limit != None:
-			# Check whether to use celcius or fahrenheit
-			f_or_c = 1
-			if os.environ["ALERT_LOCAL"] == "C":
-				f_or_c = 2
-			elif os.environ["ALERT_LOCAL"] == "F":
-				f_or_c = 1
-
 			if self.clean_sensors[f_or_c] >= self.limit:
 				self.alert = True
 			else:
 				self.alert = False
 
+		elif self.floor != None:
+			if self.clean_sensors[f_or_c] <= self.floor:
+				self.alert = True
+			else:
+				self.alert = False
+		else:
+			self.alert = False
+			# Check whether to use celcius or fahrenheit
+			
+			# if os.environ["ALERT_LOCAL"] == "C":
+			# 	f_or_c = 2
+			# elif os.environ["ALERT_LOCAL"] == "F":
+			# 	f_or_c = 1
 
-		print("Clean Sensors Readings: %s,%s,%s" % self.clean_sensors)
+
 
 
 	# Send current state over text message
@@ -125,10 +140,12 @@ class DogTempSensor(object):
 		if self.alert == True:
 			# Dont double text when alert is active
 			return
-		msg_text = msg_text + "\n(Tc): \n" + str(self.clean_sensors[2])
+		msg_text = msg_text + "\n(Tc):" + str(self.clean_sensors[2]) + "C"
 
 		if self.limit != None:
-			msg_text = msg_text + "\nCurrent Limit " + str(self.limit) + os.environ["ALERT_LOCAL"]
+			msg_text = msg_text + "\nCurrent Limit " + str(self.limit) + "C"
+		if self.floor != None:
+			msg_text = msg_text + "\nCurrent Floor " + str(self.floor) + "C"
 	
 
 		msg_text = msg_text + "\nThreads: " + str(threading.active_count() )
@@ -144,9 +161,12 @@ class DogTempSensor(object):
 		# print(current_time)
 
 		if self.alert == True:
-			msg_text = "WARNING:\nAlert Status: " + str(self.alert) + \
-			"\nCurrent Limit " + str(self.limit) + os.environ["ALERT_LOCAL"]
-			msg_text = msg_text + "\n(Tc):\n" + str(self.clean_sensors[2]) + \
+			msg_text = "WARNING:\nAlert Status: " + str(self.alert)
+			if self.limit != None:
+				msg_text = msg_text + "\nCurrent Limit " + str(self.limit) + "C"
+			if self.floor != None:
+				msg_text = msg_text + "\nCurrent Floor " + str(self.floor) + "C"
+			msg_text = msg_text + "\n(Tc):" + str(self.clean_sensors[2]) + \
 			"\n" +  "Threads: " + str(threading.active_count() )
 			self.SendTextMessage(msg_text)
 			return
@@ -191,15 +211,17 @@ class DogTempSensor(object):
 
 		if body == None:
 			print("No Body!!! Error")
-			retun None
-			
+			return render_template('twilio_response.html')
+
 		if body.lower().startswith("limit="):
+			self.floor = None
 			self.limit = int(body[len("limit="):] )
 			rstring = "Setting Temp Limit to {0} degrees {1}".format(self.limit, os.environ["ALERT_LOCAL"])
 		elif body.lower().startswith("floor="):
+			self.limit = None
 			self.floor = int(body[len("floor="):] )
 			rstring = "Setting Temp Floor to {0} degrees {1}".format(self.floor, os.environ["ALERT_LOCAL"])
-		elif body.lower() == "stop":
+		elif body.lower().startswith("disable"):
 			rstring = "Disabling Alerts!"
 			self.limit = None
 			self.floor = None

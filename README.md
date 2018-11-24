@@ -37,6 +37,32 @@ This system is designed to connect to a wireless network and send texts to a use
 	- [] Click "All Products and Services" --> Manage Numbers
 	- [] Obtain a free phone number to use
 
+## Check the Remote Repositories Registered To Your Code Repo
+1. Get current status:
+```
+git remote -v
+```
+2. Make sure that you have a Remote for "Balena"
+3. In order to pull in new code from the master branch, make sure there is a remote called "Upstream"
+4. Add Upstream to your repo: ```
+git remote add upstread
+
+## Uploading Code to Balena (The Slower Release/Git Way)
+1. Stage, Commit, and Push New Changes To GitHub
+```
+git add -A
+git commit -m "New changes"
+git push origin master
+```
+2. Push latest code to Balena
+```
+git push balena master
+```
+
+## Uploading Code to Balena (The Faster Development/Balena Way)
+1. Put device into Local Mode from the Balena Web UI.
+2. Go into root directory of github project.
+3. Push code and build on device: ```balena local push```
 
 # Setting Alerts
 Respond back to the text message with ```limit=75``` in order to start sending alert messages when the temperature reaches this point, 75 degrees F.
