@@ -192,8 +192,15 @@ class DogTempSensor(object):
 		if body.lower().startswith("limit="):
 			self.limit = int(body[len("limit="):] )
 			rstring = "Setting Alert Limit to {0} degrees {1}".format(self.limit, os.environ["ALERT_LOCAL"])
+		elif body.lower().startswith("floor="):
+			self.floor = int(body[len("floor="):] )
+			rstring = "Setting Alert Limit to {0} degrees {1}".format(self.limit, os.environ["ALERT_LOCAL"])
+		elif body.lower() == "stop":
+			rstring = "Disabling Alerts!"
+			self.limit = None
+			self.floor = None
 		else:
-			rstring = "Respond with message starting with `limit=` to set an alert!"
+			rstring = "Respond with message starting with `limit=/floor=/stop`, to set an alert!"
 		message.body(rstring)
 		response.append(message)
 
