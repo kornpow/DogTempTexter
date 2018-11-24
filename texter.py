@@ -27,6 +27,7 @@ class DogTempSensor(object):
 		# Set this to true in order to text every minute an alert!
 		self.alert = False
 		self.limit = None
+		self.floor = None
 		time.tzset()
 
 		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -191,10 +192,10 @@ class DogTempSensor(object):
 
 		if body.lower().startswith("limit="):
 			self.limit = int(body[len("limit="):] )
-			rstring = "Setting Alert Limit to {0} degrees {1}".format(self.limit, os.environ["ALERT_LOCAL"])
+			rstring = "Setting Temp Limit to {0} degrees {1}".format(self.limit, os.environ["ALERT_LOCAL"])
 		elif body.lower().startswith("floor="):
 			self.floor = int(body[len("floor="):] )
-			rstring = "Setting Alert Limit to {0} degrees {1}".format(self.limit, os.environ["ALERT_LOCAL"])
+			rstring = "Setting Temp Floor to {0} degrees {1}".format(self.floor, os.environ["ALERT_LOCAL"])
 		elif body.lower() == "stop":
 			rstring = "Disabling Alerts!"
 			self.limit = None
