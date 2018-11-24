@@ -45,7 +45,11 @@ git remote -v
 2. Make sure that you have a Remote for "Balena"
 3. In order to pull in new code from the master branch, make sure there is a remote called "Upstream"
 4. Add Upstream to your repo: ```
-git remote add upstread
+git remote add upstream git@github.com:sako0938/DogTempTexter.git
+```
+5. Merge in latest code: ```
+git merge upstream/master
+```
 
 ## Uploading Code to Balena (The Slower Release/Git Way)
 1. Stage, Commit, and Push New Changes To GitHub
