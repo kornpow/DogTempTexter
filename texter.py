@@ -189,7 +189,10 @@ class DogTempSensor(object):
 		message = Message()
 		rstring = None
 
-
+		if body == None:
+			print("No Body!!! Error")
+			retun None
+			
 		if body.lower().startswith("limit="):
 			self.limit = int(body[len("limit="):] )
 			rstring = "Setting Temp Limit to {0} degrees {1}".format(self.limit, os.environ["ALERT_LOCAL"])
