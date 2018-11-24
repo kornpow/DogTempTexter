@@ -44,10 +44,13 @@ git remote -v
 ```
 2. Make sure that you have a Remote for "Balena"
 3. In order to pull in new code from the master branch, make sure there is a remote called "Upstream"
-4. Add Upstream to your repo: ```
+4. Add Upstream to your repo: 
+```
 git remote add upstream git@github.com:sako0938/DogTempTexter.git
 ```
-5. Merge in latest code: ```
+
+5. Merge in latest code: 
+```
 git merge upstream/master
 ```
 
