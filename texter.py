@@ -126,6 +126,16 @@ class DogTempSensor(object):
 			# 	f_or_c = 1
 
 
+	def getTextInvoice(num=os.environ["CONTACT_NUMBER"],msg='test',pay=False):
+		url = 'https://lnsms.world/invoice'
+		try:
+			# Get payreq from lnsms.world
+			r = requests.post(url, data={'number':num,'text':msg})
+			# Send payment with LND
+			if pay:
+				sendPaymentByReq(r.text)
+		except Exception as e:
+			print(f'get or pay error: {e}')
 
 
 	# Send current state over text message
