@@ -12,7 +12,9 @@ RUN install_packages \
 	build-essential  \
 	python3-venv \
 	wget \
-	openssl
+	openssl \
+	wget
+
 
 WORKDIR /usr/src/app
 
@@ -46,7 +48,6 @@ RUN go get -d -v github.com/lightningnetwork/lnd && \
 RUN git clone https://github.com/sako0938/lnd_pyshell.git
 ENV PATH="/usr/src/app/lnd_pyshell/node_scripts:$PATH"
 ENV NODE_IP="localhost"
-
 
 # Install Code For DHT22
 RUN git clone --recursive https://github.com/freedom27/MyPyDHT && \
