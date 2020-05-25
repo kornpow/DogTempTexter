@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# link lnd datadir to default location
+ln -s /data/lnd /root/.lnd
+
+if [[ ! -f /root/.lnd/lnd.conf ]]
+then
+	cp /usr/src/app/lnd.conf /root/.lnd/lnd.conf
+fi
+
 while [[ true ]]; do
  echo "hi";
  sleep 60;
