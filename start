@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # link lnd datadir to default location
+mkdir -p /data/lnd
 ln -s /data/lnd /root/.lnd
 
 if [[ ! -f /root/.lnd/lnd.conf ]]
