@@ -3,6 +3,8 @@
 
 This system is designed to connect to a wireless network and send texts to a user about a temperature sensor. The user can setup alerts that will send additional messenges.
 
+balena preload ~/Downloads/balena-cloud-DogTempTexter-raspberry-pi-2.48.0+rev1-v10.8.0.img --app=1666634
+
 1. Clone this repo,
 2. Make sure Balena CLI is installed
 	```

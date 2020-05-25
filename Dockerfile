@@ -55,4 +55,4 @@ python3 setup.py install
 
 COPY . .
 
-CMD ["python3", "texter.py"]
+CMD ["bash", "start"]
