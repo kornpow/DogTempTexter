@@ -10,6 +10,8 @@ then
 	cp /usr/src/app/lnd.conf /root/.lnd/lnd.conf
 fi
 
+nohup lnd > /dev/null &
+
 while [[ true ]]; do
  echo "hi";
  sleep 60;
