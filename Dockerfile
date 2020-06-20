@@ -13,7 +13,8 @@ RUN install_packages \
 	python3-venv \
 	wget \
 	openssl \
-	wget
+	wget \
+	dphys-swapfile
 
 
 WORKDIR /usr/src/app
@@ -22,8 +23,6 @@ WORKDIR /usr/src/app
 RUN pip3 install pip -U
 
 # RUN python3 -m venv env
-
-
 
 # --prefix=/usr/src/app/env
 COPY ./requirements.txt /requirements.txt
@@ -34,7 +33,7 @@ RUN pip install -Ur /requirements.txt --extra-index-url https://www.piwheels.org
 
 ENV UPGATEGIT 1.7
 # Install GO! And make go folder
-RUN curl https://dl.google.com/go/go1.14.3.linux-armv6l.tar.gz | tar -C /usr/local -xvz && mkdir -p /usr/src/app/go
+RUN curl https://dl.google.com/go/go1.14.4.linux-armv6l.tar.gz | tar -C /usr/local -xvz && mkdir -p /usr/src/app/go
 
 # Do GO environment things to we can use it
 ENV GOPATH="/usr/src/app/go"
