@@ -4,6 +4,7 @@
 mkdir -p /data/lnd
 ln -s /data/lnd /root/.lnd
 
+# If LND config file doesnt exist create one
 if [[ ! -f /root/.lnd/lnd.conf ]]
 then
 	cp /usr/src/app/lnd.conf /root/.lnd/lnd.conf

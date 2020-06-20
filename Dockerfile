@@ -1,7 +1,7 @@
 # PI ZERO
 #FROM balenalib/rpi-raspbian:stretch
 # PI 4 
-#FROM balenalib/raspberrypi4-64:latest
+FROM balenalib/raspberrypi4-64:latest
 ENV VERSION 0.1.0
 
 RUN install_packages \
@@ -22,7 +22,7 @@ RUN install_packages \
 WORKDIR /usr/src/app
 
 # Install pip from download
-RUN pip3 install pip -U
+RUN pip3 install -U pip setuptools 
 
 # RUN python3 -m venv env
 
