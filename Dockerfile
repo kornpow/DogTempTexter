@@ -1,5 +1,7 @@
-FROM balenalib/rpi-raspbian:stretch
-
+# PI ZERO
+#FROM balenalib/rpi-raspbian:stretch
+# PI 4 
+#FROM balenalib/raspberrypi4-64:latest
 ENV VERSION 0.1.0
 
 RUN install_packages \
@@ -33,7 +35,10 @@ RUN pip install -Ur /requirements.txt --extra-index-url https://www.piwheels.org
 
 ENV UPGATEGIT 1.7
 # Install GO! And make go folder
-RUN curl https://dl.google.com/go/go1.14.4.linux-armv6l.tar.gz | tar -C /usr/local -xvz && mkdir -p /usr/src/app/go
+# Pi 0
+#RUN curl https://dl.google.com/go/go1.14.4.linux-armv6l.tar.gz | tar -C /usr/local -xvz && mkdir -p /usr/src/app/go
+# Pi 4
+RUN curl https://dl.google.com/go/go1.14.4.linux-arm64.tar.gz | tar -C /usr/local -xvz && mkdir -p /usr/src/app/go
 
 # Do GO environment things to we can use it
 ENV GOPATH="/usr/src/app/go"
